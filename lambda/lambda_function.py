@@ -1,9 +1,26 @@
+import json
 import os
 import boto3
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders.csv_loader import CSVLoader
-s3 = boto3.client('s3')
+
+def lambda_handler(event, context):
+    s3 = boto3.client('s3')
+    loadpath='s3://alab-s3/data/gov_portal.csv'
+    filename="faiss_index_ALAB"
+
+    # index 생성
+    make_index(loadpath, filename)
+    
+    # s3에 업로드
+    s3.upload_file(f'./{filename}.faiss', 'alab-s3', f'{filename}.faiss')
+    s3.upload_file(f'./{filename}.pkl', 'alab-s3', f'{filename}.pkl')
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Hello from Lambda!')
+    }
 
 def make_index(csvloadpath,outfilename):
     # OpenAI API 키 설정
@@ -24,8 +41,4 @@ def make_index(csvloadpath,outfilename):
     faiss_index = FAISS.from_documents(pages, embeddings)
     faiss_index.save_local("./",outfilename)
 
-loadpath='s3://alab-s3/data/gov_portal.csv'
-filename="faiss_index_ALAB"
-make_index(loadpath,filename)
-s3.upload_file(f'./{filename}.faiss', 'alab-s3', f'{filename}.faiss')
-s3.upload_file(f'./{filename}.pkl', 'alab-s3', f'{filename}.pkl')
+
