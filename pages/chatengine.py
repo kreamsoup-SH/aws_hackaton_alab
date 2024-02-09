@@ -48,12 +48,12 @@ def display_chatbot():
                 placeholder.markdown(output_text)
             st.session_state.messages.append({"role": "assistant", "content": output_text})
 
-def get_response(message,user_info):
+def get_response(message,user_info,model_info):
     # load_local faiss
-    os.environ['OPENAI_API_KEY'] = "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"
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    faiss_index = FAISS.load_local("./db", embeddings)
-    retriever = faiss_index.as_retriever()
+    os.environ['OPENAI_API_KEY'] = "<OPENAI KEY>" # unnecessary code. This will be removed in the future. replaced by model_info variable
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small") # unnecessary code. This will be removed in the future. replaced by model_info variable
+    faiss_index = FAISS.load_local("./db", embeddings) # unnecessary code. This will be removed in the future. replaced by model_info variable
+    retriever = faiss_index.as_retriever() # ...
     template = """다음 정보들이 주어졌으나 이것은 사용해도 좋고 그렇지 아니해도 괜찮습니다.:
     {context}
     다음 사용자 정보도 함께 고려하세요:

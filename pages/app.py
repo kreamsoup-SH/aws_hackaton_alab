@@ -1,13 +1,12 @@
-import streamlit as st
 # chatbot_page
 import chatengine
+
+# external packages
+import streamlit as st
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 import os
-
-PWD = os.path.dirname(__file__)
-
 
 def main():
     # 애플리케이션 초기화 및 페이지 설정
@@ -22,7 +21,7 @@ def main():
         st.title("필요한 정보를 불러오는중")
         st.write("잠시 기다려주세요...")
         # OpenAI API 키 설정
-        os.environ['OPENAI_API_KEY'] = "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"
+        os.environ['OPENAI_API_KEY'] = "<APIKEY HERE>"
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         st.write("임베딩 호출 완료")
         print('임베딩 호출 완료')
@@ -30,7 +29,11 @@ def main():
         print('FAISS 인덱스 존재여부 확인')
         if os.path.exists("./db"):
             st.write("FAISS 인덱스 로드");print('FAISS 인덱스 로드')
-            faiss_index = FAISS.load_local("./db","index")
+            faiss_index = FAISS.load_local(folder_path="./db",
+                                           embeddings=embeddings,
+                                           index_name="index")
+            # "./db":FAISS index folder path -> "s3://db"
+            # "index":FAISS index file name -> "index"
         else:
             print('CSV에서 embedding 생성')
             loader = CSVLoader(
@@ -42,12 +45,16 @@ def main():
                 },
                 encoding="utf-8",
             )
+            # "file_path":csv file path -> "s3://~~~/~~~.csv"
+
             pages = loader.load()
             st.write("로더 준비 완료!");print('로더 준비 완료!')
             # print(pages)
             faiss_index = FAISS.from_documents(pages, embeddings)
             st.write("문서 벡터화 완료!");print('문서 벡터화 완료!')
             faiss_index.save_local("./db","index")
+            # "./db":FAISS index folder path -> "s3://db"
+            # "index":FAISS index file name -> "index"
             
         st.write("작업 완료!")
         print('작업 완료!')
