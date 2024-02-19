@@ -19,16 +19,19 @@ os.environ['OPENAI_API_KEY'] = cfg['API_KEY']['OPENAI']
 def lambda_handler(event, context):
     s3 = boto3.client('s3') # should we put this in the function? or put it outside of the function?
     
-    csvloadpath='s3://alab-s3/data/gov_portal.csv'
-    outfilename="faiss_index_ALAB"
+    csvloadpath=os.path.join(cfg["AWS"]["S3PATH"],cfg["CSV"]["PATH"],cfg["CSV"]["FILENAME"])
+    # "s3://alab-s3/data/gov_portal.csv"
+    outfilename=cfg["FAISS"]["FILENAME"]
+    # "faiss_index_ALAB"
 
-    # index 생성
-    faiss_index = make_index(csvloadpath, outfilename)
+    # index 준비
+    faiss_index = make_index(csvloadpath)
     
     # s3에 업로드
     # s3.upload_file(f'./{outfilename}.faiss', 'alab-s3', f'{outfilename}.faiss')
     # s3.upload_file(f'./{outfilename}.pkl', 'alab-s3', f'{outfilename}.pkl')
-    faiss_index.save_local("s3://alab-s3/db/",outfilename)
+    faiss_index.save_local(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["PATH"]),outfilename)
+    # 과연 이렇게 해도 되는지 확인해봐야함
 
     return {
         'statusCode': 200,
@@ -36,9 +39,13 @@ def lambda_handler(event, context):
     }
 
 def make_index(csvloadpath):
-    embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
     # FAISS 인덱스 로드 또는 생성
     print('CSV에서 embedding 생성')
+
+    # embeddings 준비    
+    embeddings = OpenAIEmbeddings(model=cfg["EMBEDDING"]["MODEL"])
+
+    # pages 준비
     loader = CSVLoader(
             file_path=csvloadpath,
             csv_args={
@@ -48,8 +55,7 @@ def make_index(csvloadpath):
             },
         )
     pages = loader.load()
-    # print(pages)
+
+    # faiss_index 준비, return
     faiss_index = FAISS.from_documents(pages, embeddings)
     return faiss_index
-
-
