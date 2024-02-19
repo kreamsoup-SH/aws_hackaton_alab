@@ -20,22 +20,20 @@ def main(cfg):
     if st.session_state.page == 'loading':
         st.title("필요한 정보를 불러오는중")
         st.write("잠시 기다려주세요...")
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        embeddings = OpenAIEmbeddings(model=cfg["EMBEDDING"]["MODEL"])
         st.write("임베딩 호출 완료")
         print('임베딩 호출 완료')
         # FAISS 인덱스 로드 또는 생성
         print('FAISS 인덱스 존재여부 확인')
-        if os.path.exists("./db"):
+        if os.path.isfile(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"],cfg["FAISS"]["FILENAME"])):
             st.write("FAISS 인덱스 로드");print('FAISS 인덱스 로드')
-            faiss_index = FAISS.load_local(folder_path="./db",
-                                           embeddings=embeddings,
-                                           index_name="index")
-            # "./db":FAISS index folder path -> "s3://db"
-            # "index":FAISS index file name -> "index"
+            faiss_index = FAISS.load_local(folder_path=os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"]),
+                                           embeddings=cfg["EMBEDDING"]["MODEL"],
+                                           index_name=cfg["FAISS"]["FILENAME"])
         else:
             print('CSV에서 embedding 생성')
             loader = CSVLoader(
-                file_path='data/gov_portal.csv',
+                file_path=os.path.join(cfg["AWS"]["S3PATH"],cfg["CSV"]["PATH"],cfg["CSV"]["FILENAME"]),
                 csv_args={
                     "delimiter": ",",
                     "quotechar": '"',
@@ -50,9 +48,11 @@ def main(cfg):
             # print(pages)
             faiss_index = FAISS.from_documents(pages, embeddings)
             st.write("문서 벡터화 완료!");print('문서 벡터화 완료!')
-            faiss_index.save_local("./db","index")
+            # faiss_index.save_local("./db","index")
+            faiss_index.save_local(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"]),cfg["FAISS"]["FILENAME"])
             # "./db":FAISS index folder path -> "s3://db"
             # "index":FAISS index file name -> "index"
+            # s3에 정상적으로 저장되는지 확인해봐야함
             
         st.write("작업 완료!")
         print('작업 완료!')

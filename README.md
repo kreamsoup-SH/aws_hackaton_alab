@@ -26,6 +26,10 @@ You need to create new OPENAI API key and apply it to code.
 - [ ] Apply inference part to lambda function
 - [ ] Remove inference part from main page of chatbot code
 
+Optional
+- [ ] preference settings (local db / s3 / dynamo / etc. ...)
+- [ ] data path custom
+
 ## Example of "awsconfig.json"
 ```ruby
 {
