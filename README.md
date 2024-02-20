@@ -20,11 +20,11 @@ requirements.txt is not updated yet.
 You need to create new OPENAI API key and apply it to code.  
 
 ## Todo List  
-- [ ] Adapt json config
-- [ ] Link AWS EC2 and S3 bucket
-- [ ] Move faiss index, csv file, etc. from EC2 to S3
+- [x] Adapt json config
+- [ ] Link AWS EC2 and S3 bucket *(done 50%)*
+- [ ] Move faiss index, csv file, etc. from EC2 to S3 *(done 50%)*
 - [ ] Apply inference part to lambda function
-- [ ] Remove inference part from main page of chatbot code
+- [x] Remove inference part from main page of chatbot code
 
 Optional
 - [ ] preference settings (local db / s3 / dynamo / etc. ...)
