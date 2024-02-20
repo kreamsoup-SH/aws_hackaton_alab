@@ -34,13 +34,21 @@ Optional
 ```ruby
 {
     "API_KEY": {
-        "OPENAI": "<your_openai_api_key>"
+        "OPENAI": "<Your API KEY Here>"
     },
     "AWS": {
-        "S3PATH" : "s3://your-bucket-name"
+        "S3PATH" : "s3://your-s3"
     },
-    "MODEL": {
-        "NAME": "gpt-3.5-turbo",
+    "TOKENIZER":{
+        "MODEL": "gpt-3.5-turbo",
+        "DEVICE": "cuda"
+    },
+    "EMBEDDING":{
+        "MODEL": "text-embedding-3-small",
+        "DEVICE": "cpu"
+    },
+    "LLM": {
+        "MODEL": "gpt-3.5-turbo",
         "TEMPERATURE": 0.7,
         "MAX_TOKENS": 100,
         "TOP_P": 1.0,
@@ -48,8 +56,12 @@ Optional
         "PRESENCE_PENALTY": 0.0
     },
     "FAISS": {
-        "INDEX_PATH": "",
-        "FILENAME": ""
+        "PATH": "setting/data/faiss",
+        "FILENAME": "index"
+    },
+    "CSV": {
+        "PATH": "setting/data/csv",
+        "FILENAME": "temp.csv"
     }
 }
 ```
