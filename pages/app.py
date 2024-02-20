@@ -20,45 +20,25 @@ def main(cfg):
     if st.session_state.page == 'loading':
         st.title("필요한 정보를 불러오는중")
         st.write("잠시 기다려주세요...")
+
+        # 임베딩 로드
         embeddings = OpenAIEmbeddings(model=cfg["EMBEDDING"]["MODEL"])
-        st.write("임베딩 호출 완료")
-        print('임베딩 호출 완료')
-        # FAISS 인덱스 로드 또는 생성
-        print('FAISS 인덱스 존재여부 확인')
-        if os.path.isfile(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"],cfg["FAISS"]["FILENAME"])):
-            st.write("FAISS 인덱스 로드");print('FAISS 인덱스 로드')
-            faiss_index = FAISS.load_local(folder_path=os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"]),
+        st.write("임베딩 호출 완료");print('임베딩 호출 완료')
+
+        # FAISS 인덱스
+        st.write("FAISS 인덱스 존재여부 확인");print('FAISS 인덱스 존재여부 확인')
+        # FAISS 인덱스가 존재하지 않을 경우 새로 생성하는 함수 호출
+        if not os.path.isfile(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"],cfg["FAISS"]["FILENAME"])):
+            createfaiss(embeddings, cfg)
+        # FAISS 인덱스 로드
+        st.write("FAISS 인덱스 로드 시작");print('FAISS 인덱스 로드 시작')
+        faiss_index = FAISS.load_local(folder_path=os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"]),
                                            embeddings=cfg["EMBEDDING"]["MODEL"],
                                            index_name=cfg["FAISS"]["FILENAME"])
-        else:
-            print('CSV에서 embedding 생성')
-            loader = CSVLoader(
-                file_path=os.path.join(cfg["AWS"]["S3PATH"],cfg["CSV"]["PATH"],cfg["CSV"]["FILENAME"]),
-                csv_args={
-                    "delimiter": ",",
-                    "quotechar": '"',
-                    "fieldnames": ["url","title","content"],
-                },
-                encoding="utf-8",
-            )
-            # "file_path":csv file path -> "s3://~~~/~~~.csv"
+        st.write("FAISS 인덱스 로드 완료");print('FAISS 인덱스 로드 완료')
 
-            pages = loader.load()
-            st.write("로더 준비 완료!");print('로더 준비 완료!')
-            # print(pages)
-            faiss_index = FAISS.from_documents(pages, embeddings)
-            st.write("문서 벡터화 완료!");print('문서 벡터화 완료!')
-            # faiss_index.save_local("./db","index")
-            faiss_index.save_local(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"]),cfg["FAISS"]["FILENAME"])
-            # "./db":FAISS index folder path -> "s3://db"
-            # "index":FAISS index file name -> "index"
-            # s3에 정상적으로 저장되는지 확인해봐야함
-            
-        st.write("작업 완료!")
-        print('작업 완료!')
-        
+        st.write("작업 완료!");print('작업 완료!')
         st.session_state.page = "home"
-        print('session_state.page is home now')
 
     # 홈 화면
     if st.session_state.page == "home":
@@ -66,10 +46,33 @@ def main(cfg):
         st.write("복지정보는 클릭 한 번, 복지왕과 챗 하세요!")
         if st.button("챗봇 시작"):
             st.session_state.page = "chatbot"
-
     # 챗봇 화면
     if st.session_state.page == "chatbot":
-        chatengine.display_chatbot()
+        chatengine.display_chatbot(faiss_index,embeddings,cfg)
+
+def createfaiss(embeddings, cfg):
+    # FAISS 인덱스가 존재하지 않을 경우 새로 생성
+    print('CSV에서 embedding 생성')
+    loader = CSVLoader(
+        file_path=os.path.join(cfg["AWS"]["S3PATH"],cfg["CSV"]["PATH"],cfg["CSV"]["FILENAME"]),
+        csv_args={
+            "delimiter": ",",
+            "quotechar": '"',
+            "fieldnames": ["url","title","content"],
+        },
+        encoding="utf-8",
+    )
+    # "file_path":csv file path -> "s3://~~~/~~~.csv"
+    pages = loader.load()
+    st.write("로더 준비 완료!");print('로더 준비 완료!')
+    # print(pages)
+    faiss_index = FAISS.from_documents(pages, embeddings)
+    st.write("문서 벡터화 완료!");print('문서 벡터화 완료!')
+    # faiss_index.save_local("./db","index")
+    faiss_index.save_local(os.path.join(cfg["AWS"]["S3PATH"],cfg["FAISS"]["INDEX_PATH"]),cfg["FAISS"]["FILENAME"])
+    # "./db":FAISS index folder path -> "s3://db"
+    # "index":FAISS index file name -> "index"
+    # s3에 정상적으로 저장되는지 확인해봐야함
 
 if __name__ == "__main__":
     # CONFIGPATH = "s3://~~~/config.json"

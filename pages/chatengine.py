@@ -13,7 +13,7 @@ import os
 def clear_chat_history():
     st.session_state.messages = [{"role": "assistant", "content": "대화내용이 초기화되었습니다. 궁금한 점을 언제든지 물어보세요!"}]
 
-def display_chatbot():
+def display_chatbot(faiss_index,cfg):
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "assistant", "content": "복지왕 챗봇이 여러분의 복지 관련 질문에 답변 드립니다. 정부 복지정책에 대해 알고 싶은 것이 있으신가요?"}]
 
@@ -43,16 +43,12 @@ def display_chatbot():
             with st.chat_message("assistant"):
                 # model inference
                 print(st.session_state.messages[-1]["content"])
-                output_text = get_response(st.session_state.messages[-1]["content"],user_info) ### 여기가 언어모델로부터 받은 답변이 들어가야함.
+                output_text = get_response(st.session_state.messages[-1]["content"], user_info, faiss_index, cfg) ### 여기가 언어모델로부터 받은 답변이 들어가야함.
                 placeholder = st.empty()
                 placeholder.markdown(output_text)
             st.session_state.messages.append({"role": "assistant", "content": output_text})
 
-def get_response(message,user_info,model_info):
-    # load_local faiss
-    os.environ['OPENAI_API_KEY'] = "<OPENAI KEY>" # unnecessary code. This will be removed in the future. replaced by model_info variable
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small") # unnecessary code. This will be removed in the future. replaced by model_info variable
-    faiss_index = FAISS.load_local("./db", embeddings) # unnecessary code. This will be removed in the future. replaced by model_info variable
+def get_response(message, user_info, faiss_index, cfg):
     retriever = faiss_index.as_retriever() # ...
     template = """다음 정보들이 주어졌으나 이것은 사용해도 좋고 그렇지 아니해도 괜찮습니다.:
     {context}
@@ -68,7 +64,7 @@ def get_response(message,user_info,model_info):
     print('retrieval is ready')
     prompt = ChatPromptTemplate.from_template(template)
     print('prompt is ready')
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo-0125", temperature=0, max_tokens= 300)
+    llm = ChatOpenAI(model_name=cfg["LLM"]["MODEL"], temperature=cfg["LLM"]["TEMPERATURE"], max_tokens=cfg["LLM"]["MAX_TOKENS"])
     print('llm is ready')
     rag_chain = retrieval | prompt | llm | StrOutputParser()
     print('rag_chain is ready')
